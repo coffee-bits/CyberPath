@@ -1,0 +1,73 @@
+attack_paths:
+  - name: "Compromise Coffee Machine via WiFi"
+    severity: 4
+    feasibility: 4
+    expertise: 3
+    steps:
+      - from: "Attacker"
+        to: "Coffee Machine"
+        action: "Exploit WiFi vulnerability"
+      - from: "Coffee Machine"
+        to: "Backend Server"
+        action: "Send malicious request"
+      - from: "Backend Server"
+        to: "Coffee Bean Supplier"
+        action: "Manipulate order data"
+    subpaths:
+      - name: "Lateral Movement to Office Network"
+        severity: 5
+        feasibility: 3
+        expertise: 4
+        steps:
+          - from: "Coffee Machine"
+            to: "Office Printer"
+            action: "Pivot via open port"
+          - from: "Office Printer"
+            to: "Internal File Server"
+            action: "Access sensitive files"
+        subpaths:
+          - name: "Escalate to Domain Controller"
+            severity: 5
+            feasibility: 2
+            expertise: 5
+            steps:
+              - from: "Internal File Server"
+                to: "Domain Controller"
+                action: "Exploit SMB vulnerability"
+          - name: "Access HR Database"
+            severity: 4
+            feasibility: 3
+            expertise: 3
+            steps:
+              - from: "Internal File Server"
+                to: "HR Database"
+                action: "Steal employee data"
+  - name: "Denial of Service on Coffee Machine"
+    severity: 3
+    feasibility: 5
+    expertise: 2
+    steps:
+      - from: "Attacker"
+        to: "Coffee Machine"
+        action: "Flood with requests"
+    subpaths:
+      - name: "Disrupt Supply Chain"
+        severity: 4
+        feasibility: 3
+        expertise: 3
+        steps:
+          - from: "Coffee Machine"
+            to: "Backend Server"
+            action: "Send malformed data"
+          - from: "Backend Server"
+            to: "Coffee Bean Supplier"
+            action: "Interrupt orders"
+        subpaths:
+          - name: "Trigger Supplier System Crash"
+            severity: 5
+            feasibility: 2
+            expertise: 4
+            steps:
+              - from: "Coffee Bean Supplier"
+                to: "Supplier Database"
+                action: "Exploit buffer overflow"
