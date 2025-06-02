@@ -86,13 +86,13 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     """
     uml = [
         "@startuml",
-        # "skinparam monochrome true",  # REMOVE this line to enable colors
         "skinparam linetype ortho",
         "left to right direction"
     ]
 
     node_defs = []
     node_ids = set()
+    edge_defs = []
 
     def add_tree_edges(path, parent=None):
         node_id = safe_node_id(path["name"])
@@ -100,18 +100,18 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
         if node_id not in node_ids:
             label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
             color = score_to_color(path.get("score", 0))
-            # Use only a single # for color (not ##)
             node_defs.append(f'rectangle {node_id} as "{label}" {color}')
             node_ids.add(node_id)
         if parent:
-            uml.append(f'{parent} --> {node_id}')
+            edge_defs.append(f'{parent} --> {node_id}')
         for sub in path.get("subpaths", []):
             add_tree_edges(sub, node_id)
 
     for path in attack_paths:
         add_tree_edges(path)
 
-    uml = uml[:4] + node_defs + uml[4:]
+    uml += node_defs
+    uml += edge_defs
     uml.append("@enduml")
     return "\n".join(uml)
 
