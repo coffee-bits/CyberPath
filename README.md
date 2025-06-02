@@ -149,7 +149,7 @@ This will create the following files in the `output` directory:
 
 ## Example Output
 
-![Attack Paths](output/attack_paths.png)
+![Attack Paths](attack_paths.png)
 
 ### Scoring Table
 
