@@ -72,6 +72,10 @@ def safe_node_id(name):
     import re
     # Replace non-alphanumeric characters with underscores
     node_id = "node_" + re.sub(r'\W+', '_', name)
+    # PlantUML node IDs must not end with an underscore and must not be empty
+    node_id = node_id.rstrip('_')
+    if len(node_id) <= 5:
+        node_id += "x"
     # If the first character after 'node_' is a digit, prefix with 'n'
     if node_id[5].isdigit():
         node_id = "node_n" + node_id[5:]
@@ -99,7 +103,8 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
         if node_id not in node_ids:
             label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
             color = score_to_color(path.get("score", 0))
-            node_defs.append(f'{node_id} [{label}] #{color}')
+            # Use rectangle for node to avoid PlantUML class/actor confusion
+            node_defs.append(f'rectangle {node_id} as "{label}" #{color}')
             node_ids.add(node_id)
         if parent:
             uml.append(f'{parent} --> {node_id}')
@@ -109,7 +114,7 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     for path in attack_paths:
         add_tree_edges(path)
 
-    uml = uml[:4] + node_defs + uml[4:]  # Insert node definitions after direction
+    uml = uml[:4] + node_defs + uml[4:]
     uml.append("@enduml")
     return "\n".join(uml)
 
