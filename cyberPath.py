@@ -151,11 +151,11 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
             node_defs.append(f'rectangle {node_id} as "{label}" {color}')
             node_ids.add(node_id)
         if parent:
-            # Color the edge according to the cumulative score of the full path it belongs to
             edge_color = ""
             edge = (parent, node_id)
             if edge in edge_score_map:
-                edge_color = f" #{score_to_edge_color(edge_score_map[edge], min_score, max_score)}"
+                # Fix: Only ONE # for color and NO space after -[
+                edge_color = f"#{score_to_edge_color(edge_score_map[edge], min_score, max_score)[1:]}"
             edge_defs.append(f'{parent} -[{edge_color}]-> {node_id}')
         for sub in path.get("subpaths", []):
             add_tree_edges(sub, node_id)
