@@ -79,12 +79,20 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     ]
 
     node_defs = []
+    node_ids = set()
+
+    def safe_node_id(name):
+        # Ensure unique and PlantUML-safe node IDs
+        return "node_" + str(abs(hash(name)))[:10]
 
     def add_tree_edges(path, parent=None):
-        node_id = f'node_{abs(hash(path["name"]))}'
-        label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
-        color = score_to_color(path.get("score", 0))
-        node_defs.append(f'{node_id} [{label}] #{color}')
+        node_id = safe_node_id(path["name"])
+        # Avoid duplicate node definitions
+        if node_id not in node_ids:
+            label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
+            color = score_to_color(path.get("score", 0))
+            node_defs.append(f'{node_id} [{label}] #{color}')
+            node_ids.add(node_id)
         if parent:
             uml.append(f'{parent} --> {node_id}')
         for sub in path.get("subpaths", []):
