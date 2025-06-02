@@ -78,11 +78,49 @@ def safe_node_id(name):
         node_id = "node_n" + node_id[5:]
     return node_id
 
+def get_fullpath_scores(attack_paths: List[Dict[str, Any]]) -> Tuple[float, float, List[Tuple[list, float]]]:
+    """
+    Returns (min_score, max_score, list of (node_id_path, cumulative_score)) for all full attack chains.
+    """
+    full_paths = []
+    def walk(path, ids, scores):
+        node_id = safe_node_id(path["name"])
+        ids = ids + [node_id]
+        scores = scores + [path["score"]]
+        if "subpaths" in path and path["subpaths"]:
+            for sub in path["subpaths"]:
+                walk(sub, ids, scores)
+        else:
+            cumulative = sum(scores) / len(scores)
+            full_paths.append((ids, cumulative))
+    for path in attack_paths:
+        walk(path, [], [])
+    if not full_paths:
+        return 0, 0, []
+    min_score = min(c for _, c in full_paths)
+    max_score = max(c for _, c in full_paths)
+    return min_score, max_score, full_paths
+
+def score_to_edge_color(score: float, min_score: float, max_score: float) -> str:
+    """
+    Map a score to a color gradient from green (low) to red (high).
+    """
+    # Normalize score between 0 (min) and 1 (max)
+    if max_score == min_score:
+        t = 0.0
+    else:
+        t = (score - min_score) / (max_score - min_score)
+    # Interpolate between green and red
+    r = int(39 + t * (231 - 39))    # 0x27 to 0xe7
+    g = int(174 + (1 - t) * (196 - 174))  # 0xae to 0xc4
+    b = int(96 + (1 - t) * (60 - 96))     # 0x60 to 0x3c
+    return f"#{r:02x}{g:02x}{b:02x}"
+
 def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     """
     Generate PlantUML code for the attack paths and all nested subpaths,
     visualized as an attack tree (tree structure, not nested packages),
-    with node color based on score.
+    with node color based on score and edge color based on fullpath cumulative score.
     """
     uml = [
         "@startuml",
@@ -94,16 +132,31 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     node_ids = set()
     edge_defs = []
 
+    # Get all full paths and their cumulative scores for edge coloring
+    min_score, max_score, full_paths = get_fullpath_scores(attack_paths)
+    # Build a lookup for each edge (parent, child) to the cumulative score of the full path it belongs to
+    edge_score_map = {}
+    for ids, cumulative in full_paths:
+        for i in range(1, len(ids)):
+            edge = (ids[i-1], ids[i])
+            # If edge is part of multiple paths, keep the highest score (most critical)
+            if edge not in edge_score_map or cumulative > edge_score_map[edge]:
+                edge_score_map[edge] = cumulative
+
     def add_tree_edges(path, parent=None):
         node_id = safe_node_id(path["name"])
-        # Avoid duplicate node definitions
         if node_id not in node_ids:
             label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
             color = score_to_color(path.get("score", 0))
             node_defs.append(f'rectangle {node_id} as "{label}" {color}')
             node_ids.add(node_id)
         if parent:
-            edge_defs.append(f'{parent} --> {node_id}')
+            # Color the edge according to the cumulative score of the full path it belongs to
+            edge_color = ""
+            edge = (parent, node_id)
+            if edge in edge_score_map:
+                edge_color = f" #{score_to_edge_color(edge_score_map[edge], min_score, max_score)}"
+            edge_defs.append(f'{parent} -[{edge_color}]-> {node_id}')
         for sub in path.get("subpaths", []):
             add_tree_edges(sub, node_id)
 
