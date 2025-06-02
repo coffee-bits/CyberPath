@@ -76,9 +76,10 @@ def save_plantuml(uml_code: str, filename: str):
 
 def render_plantuml(uml_file: str, output_dir: str):
     """Render PlantUML file to PNG using plantuml.jar."""
+    # Ensure PNG is output directly into OUTPUT_DIR, not a nested output folder
     subprocess.run([
-        "java", "-jar", PLANTUML_JAR_PATH, "-tpng", uml_file, "-o", output_dir
-    ], check=True)
+        "java", "-jar", PLANTUML_JAR_PATH, "-tpng", os.path.basename(uml_file), "-o", ".",  # Output to OUTPUT_DIR
+    ], cwd=output_dir, check=True)
 
 def generate_table(attack_paths: List[Dict[str, Any]]) -> str:
     """Generate a Markdown table with the attack path and all nested subpath scores."""
