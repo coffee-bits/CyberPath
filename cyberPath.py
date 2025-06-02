@@ -53,19 +53,47 @@ def evaluate_paths(attack_paths: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         eval_path(path)
     return attack_paths
 
+def score_to_color(score: float) -> str:
+    """
+    Returns a PlantUML color code based on the score.
+    Green: <=2.0, Yellow: >2.0 and <4.0, Red: >=4.0
+    """
+    if score < 2.0:
+        return "#27ae60"  # green
+    elif score < 4.0:
+        return "#f1c40f"  # yellow
+    else:
+        return "#e74c3c"  # red
+
 def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
-    """Generate PlantUML code for the attack paths and all nested subpaths."""
-    def add_path(uml, path, indent=0):
-        prefix = "  " * indent
-        uml.append(f'{prefix}package "{path["name"]}" {{')
-        for step in path.get("steps", []):
-            uml.append(f'{prefix}  [{step["from"]}] --> [{step["to"]}] : {step.get("action", "")}')
+    """
+    Generate PlantUML code for the attack paths and all nested subpaths,
+    visualized as an attack tree (tree structure, not nested packages),
+    with node color based on score.
+    """
+    uml = [
+        "@startuml",
+        "skinparam monochrome true",
+        "skinparam linetype ortho",
+        "left to right direction"
+    ]
+
+    node_defs = []
+
+    def add_tree_edges(path, parent=None):
+        node_id = f'node_{abs(hash(path["name"]))}'
+        label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
+        color = score_to_color(path.get("score", 0))
+        node_defs.append(f'{node_id} [{label}] #{color}')
+        if parent:
+            uml.append(f'{parent} --> {node_id}')
         for sub in path.get("subpaths", []):
-            add_path(uml, sub, indent + 1)
-        uml.append(f'{prefix}}}')
-    uml = ["@startuml", "skinparam monochrome true"]
+            add_tree_edges(sub, node_id)
+
     for path in attack_paths:
-        add_path(uml, path)
+        add_tree_edges(path)
+
+    uml = uml[:4] + node_defs + uml[4:]  # Insert node definitions after direction
     uml.append("@enduml")
     return "\n".join(uml)
 
