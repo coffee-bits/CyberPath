@@ -100,8 +100,8 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
         if node_id not in node_ids:
             label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
             color = score_to_color(path.get("score", 0))
-            # Use single # for color, not double ##
-            node_defs.append(f'rectangle {node_id} as "{label}" #{color}')
+            # Use only a single # for color (not ##)
+            node_defs.append(f'rectangle {node_id} as "{label}" {color}')
             node_ids.add(node_id)
         if parent:
             uml.append(f'{parent} --> {node_id}')
