@@ -86,7 +86,7 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     """
     uml = [
         "@startuml",
-        "skinparam monochrome true",
+        # "skinparam monochrome true",  # REMOVE this line to enable colors
         "skinparam linetype ortho",
         "left to right direction"
     ]
