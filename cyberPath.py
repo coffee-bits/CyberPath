@@ -103,17 +103,26 @@ def get_fullpath_scores(attack_paths: List[Dict[str, Any]]) -> Tuple[float, floa
 
 def score_to_edge_color(score: float, min_score: float, max_score: float) -> str:
     """
-    Map a score to a color gradient from green (low) to red (high).
+    Map a score to a color gradient from green (low) to yellow (mid) to red (high).
     """
     # Normalize score between 0 (min) and 1 (max)
     if max_score == min_score:
         t = 0.0
     else:
         t = (score - min_score) / (max_score - min_score)
-    # Interpolate between green and red
-    r = int(39 + t * (231 - 39))    # 0x27 to 0xe7
-    g = int(174 + (1 - t) * (196 - 174))  # 0xae to 0xc4
-    b = int(96 + (1 - t) * (60 - 96))     # 0x60 to 0x3c
+    # Green to yellow to red gradient
+    if t <= 0.5:
+        # Green (#27ae60) to Yellow (#f1c40f)
+        ratio = t / 0.5
+        r = int(0x27 + ratio * (0xf1 - 0x27))
+        g = int(0xae + ratio * (0xc4 - 0xae))
+        b = int(0x60 + ratio * (0x0f - 0x60))
+    else:
+        # Yellow (#f1c40f) to Red (#e74c3c)
+        ratio = (t - 0.5) / 0.5
+        r = int(0xf1 + ratio * (0xe7 - 0xf1))
+        g = int(0xc4 - ratio * (0xc4 - 0x4c))
+        b = int(0x0f + ratio * (0x3c - 0x0f))
     return f"#{r:02x}{g:02x}{b:02x}"
 
 def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
