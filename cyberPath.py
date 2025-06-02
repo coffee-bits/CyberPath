@@ -65,6 +65,18 @@ def score_to_color(score: float) -> str:
     else:
         return "#e74c3c"  # red
 
+def safe_node_id(name):
+    """
+    Ensure unique and PlantUML-safe node IDs (letters, digits, underscores only, must not start with a digit).
+    """
+    import re
+    # Replace non-alphanumeric characters with underscores
+    node_id = "node_" + re.sub(r'\W+', '_', name)
+    # If the first character after 'node_' is a digit, prefix with 'n'
+    if node_id[5].isdigit():
+        node_id = "node_n" + node_id[5:]
+    return node_id
+
 def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     """
     Generate PlantUML code for the attack paths and all nested subpaths,
@@ -80,10 +92,6 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
 
     node_defs = []
     node_ids = set()
-
-    def safe_node_id(name):
-        # Ensure unique and PlantUML-safe node IDs
-        return "node_" + str(abs(hash(name)))[:10]
 
     def add_tree_edges(path, parent=None):
         node_id = safe_node_id(path["name"])
