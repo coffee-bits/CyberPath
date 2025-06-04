@@ -1,5 +1,6 @@
 attack_paths:
   - name: "Compromise Coffee Machine via WiFi"
+    technique: "T1476"  # MITRE ATT&CK ID (example)
     severity: 4
     feasibility: 4
     expertise: 3
@@ -15,6 +16,7 @@ attack_paths:
         action: "Manipulate order data"
     subpaths:
       - name: "Lateral Movement to Office Network"
+        technique: "T1021"
         severity: 5
         feasibility: 3
         expertise: 4
@@ -27,6 +29,7 @@ attack_paths:
             action: "Access sensitive files"
         subpaths:
           - name: "Escalate to Domain Controller"
+            technique: "T1068"
             severity: 5
             feasibility: 2
             expertise: 5
@@ -35,6 +38,7 @@ attack_paths:
                 to: "Domain Controller"
                 action: "Exploit SMB vulnerability"
           - name: "Access HR Database"
+            technique: "T1005"
             severity: 4
             feasibility: 3
             expertise: 3

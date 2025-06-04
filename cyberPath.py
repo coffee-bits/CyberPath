@@ -130,6 +130,7 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     Generate PlantUML code for the attack paths and all nested subpaths,
     visualized as an attack tree (tree structure, not nested packages),
     with node color based on score and edge color based on fullpath cumulative score.
+    Shows technique if present.
     """
     uml = [
         "@startuml",
@@ -155,7 +156,11 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     def add_tree_edges(path, parent=None):
         node_id = safe_node_id(path["name"])
         if node_id not in node_ids:
-            label = f'{path["name"]}\\nScore: {path.get("score", 0):.2f}'
+            technique = path.get("technique", "")
+            label = f'{path["name"]}'
+            if technique:
+                label += f'\\n[{technique}]'
+            label += f'\\nScore: {path.get("score", 0):.2f}'
             color = score_to_color(path.get("score", 0))
             node_defs.append(f'rectangle {node_id} as "{label}" {color}')
             node_ids.add(node_id)
@@ -192,12 +197,13 @@ def render_plantuml(uml_file: str, output_dir: str):
     ], cwd=output_dir, check=True)
 
 def generate_table(attack_paths: List[Dict[str, Any]]) -> str:
-    """Generate a Markdown table with the attack path and all nested subpath scores."""
-    header = "| Path / Subpath | Severity | Feasibility | Expertise | Score |\n|---|---|---|---|---|"
+    """Generate a Markdown table with the attack path, technique, and all nested subpath scores."""
+    header = "| Path / Subpath | Technique | Severity | Feasibility | Expertise | Score |\n|---|---|---|---|---|---|"
     rows = []
     def add_rows(path, prefix=""):
+        technique = path.get("technique", "")
         rows.append(
-            f'| {prefix}{path["name"]} | {path.get("severity", "")} | {path.get("feasibility", "")} | {path.get("expertise", "")} | {path.get("score", ""):.2f} |'
+            f'| {prefix}{path["name"]} | {technique} | {path.get("severity", "")} | {path.get("feasibility", "")} | {path.get("expertise", "")} | {path.get("score", ""):.2f} |'
         )
         for sub in path.get("subpaths", []):
             add_rows(sub, prefix + "└─ ")
@@ -240,13 +246,43 @@ def generate_fullpath_table(attack_paths: List[Dict[str, Any]]) -> str:
         rows.append(f"| {chain} | {cumulative:.2f} |")
     return header + "\n" + "\n".join(rows)
 
-def generate_markdown_report(image_path: str, table_md: str, fullpath_table_md: str) -> str:
+def generate_attack_tree_text(attack_paths: List[Dict[str, Any]]) -> str:
+    """
+    Generate a textual attack tree in the style of Bruce Schneier's format.
+    Each node is indented, subpaths are shown as children, and AND/OR logic can be added if present.
+    """
+    def node_text(path, indent=0):
+        prefix = "    " * indent + "- "
+        logic = path.get("logic", "OR")  # default to OR if not specified
+        technique = f" [{path['technique']}]" if 'technique' in path else ""
+        score = f" (Score: {path.get('score', 0):.2f})"
+        line = f"{prefix}{path['name']}{technique}{score}"
+        lines = [line]
+        if "subpaths" in path and path["subpaths"]:
+            if len(path["subpaths"]) > 1:
+                lines.append("    " * (indent + 1) + f"({logic})")
+            for sub in path["subpaths"]:
+                lines.extend(node_text(sub, indent + 1))
+        return lines
+
+    tree_lines = []
+    for path in attack_paths:
+        tree_lines.extend(node_text(path))
+    return "\n".join(tree_lines)
+
+def generate_markdown_report(image_path: str, table_md: str, fullpath_table_md: str, attack_tree_text: str) -> str:
     """Generate the final Markdown report."""
     return f"""# Pentest Attack Paths Report
 
 ## Attack Path Diagram
 
 ![Attack Paths]({image_path})
+
+## Schneier-style Attack Tree
+
+```
+{attack_tree_text}
+```
 
 ## Scoring Table
 
@@ -270,7 +306,8 @@ def main(description_file: str):
     image_file = "attack_paths.png"
     table_md = generate_table(attack_paths)
     fullpath_table_md = generate_fullpath_table(attack_paths)
-    report_md = generate_markdown_report(image_file, table_md, fullpath_table_md)
+    attack_tree_text = generate_attack_tree_text(attack_paths)
+    report_md = generate_markdown_report(image_file, table_md, fullpath_table_md, attack_tree_text)
     with open(REPORT_MD, "w", encoding="utf-8") as f:
         f.write(report_md)
     print(f"Report generated: {REPORT_MD}")
