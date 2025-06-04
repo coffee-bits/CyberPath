@@ -1,0 +1,19 @@
+@startuml
+skinparam linetype ortho
+top to bottom direction
+rectangle node_Compromise_Organization as "Compromise Organization\n[ROOT]\nScore: 3.80" #f1c40f
+rectangle node_Compromise_Coffee_Machine_via_WiFi as "Compromise Coffee Machine via WiFi\n[T1476]\nScore: 3.80" #f1c40f
+rectangle node_Lateral_Movement_to_Office_Network as "Lateral Movement to Office Network\n[T1021]\nScore: 4.20" #e74c3c
+rectangle node_Escalate_to_Domain_Controller as "Escalate to Domain Controller\n[T1068]\nScore: 4.10" #e74c3c
+rectangle node_Access_HR_Database as "Access HR Database\n[T1005]\nScore: 3.50" #f1c40f
+rectangle node_Denial_of_Service_on_Coffee_Machine as "Denial of Service on Coffee Machine\nScore: 3.40" #f1c40f
+rectangle node_Disrupt_Supply_Chain as "Disrupt Supply Chain\nScore: 3.50" #f1c40f
+rectangle node_Trigger_Supplier_System_Crash as "Trigger Supplier System Crash\nScore: 3.90" #f1c40f
+node_Compromise_Organization -[#e74c3c]-> node_Compromise_Coffee_Machine_via_WiFi
+node_Compromise_Coffee_Machine_via_WiFi -[#e74c3c]-> node_Lateral_Movement_to_Office_Network
+node_Lateral_Movement_to_Office_Network -[#e74c3c]-> node_Escalate_to_Domain_Controller
+node_Lateral_Movement_to_Office_Network -[#f0ba12]-> node_Access_HR_Database
+node_Compromise_Organization -[#27ae60]-> node_Denial_of_Service_on_Coffee_Machine
+node_Denial_of_Service_on_Coffee_Machine -[#27ae60]-> node_Disrupt_Supply_Chain
+node_Disrupt_Supply_Chain -[#27ae60]-> node_Trigger_Supplier_System_Crash
+@enduml
