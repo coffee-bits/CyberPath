@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Chris
+# Copyright (c) 2025 Christian Jess
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -130,12 +130,11 @@ def generate_plantuml(attack_paths: List[Dict[str, Any]]) -> str:
     Generate PlantUML code for the attack paths and all nested subpaths,
     visualized as an attack tree (tree structure, not nested packages),
     with node color based on score and edge color based on fullpath cumulative score.
-    Shows technique if present.
     """
     uml = [
         "@startuml",
         "skinparam linetype ortho",
-        "left to right direction"
+        "top to bottom direction"  # Change direction: top-down instead of left-right
     ]
 
     node_defs = []
